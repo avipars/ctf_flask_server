@@ -8,8 +8,10 @@ from flask import redirect, render_template, send_from_directory, abort, url_for
 from markupsafe import escape
 from werkzeug.utils import secure_filename
 
- 
-ALLOW_LIST = {'pdf', 'png', 'jpg', 'jpeg', 'gif','txt'}
+ # allowed files and their mime types 
+ALLOW_MIME = {'pdf': 'application/pdf', 'png': 'image/png',
+              'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+              'gif': 'image/gif', 'txt': 'text/plain'}
 # from user_agents import parse
 # from werkzeug.useragents import UserAgent
 
@@ -20,8 +22,12 @@ LOGINS = {"eileen": "FamousZebraFumbles75",
 app.secret_key = "MyUb3rSecr3tS355ionK3y" # key for sessions
 
 RESOURCE_PATH = os.path.join(app.root_path, 'resources') # Configure the allowed directory
-
-
+# favicon
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/x-icon')
+    
 @app.route('/files/<path:filename>')
 @app.route('/files', defaults={'filename': ''})
 def serve_file(filename):
@@ -36,12 +42,13 @@ def serve_file(filename):
     if not path or not filename:
         logging.error(f"Invalid or unsafe path: {filename}")
         abort(500)
-
-    if not allowed_type(filename, ALLOW_LIST):   # Check file extension if needed
+    
+    
+    if not allowed_type(filename, ALLOW_MIME):   # Check file extension if needed
         logging.error(f"Invalid file extension: {filename}")
         abort(415)
 
-    return send_from_directory(RESOURCE_PATH, filename)
+    return send_from_directory(RESOURCE_PATH, filename, as_attachment=True, mimetype=ALLOW_MIME[filename.rsplit('.', 1)[1].lower()]), 200
 
 def validate_path(path):
     print(f"Allowed dir {RESOURCE_PATH} VPath: {path}")
@@ -57,15 +64,16 @@ def validate_path(path):
         return False
     return absolute_path
 
-def allowed_type(filename, exts=ALLOW_LIST):
+def allowed_type(filename, exts=ALLOW_MIME):
     """
     file types that are allowed to be shown to user 
     """
     if is_bad(filename):  # if null byte (encoded or not), return false
         return False
     
+    #only care about exts keys not values
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in exts
+           filename.rsplit('.', 1)[1].lower() in exts.keys()
 
 def is_bad(path):
     bad_stuff = ('..', '%2e%2e', '\x00','%00') # bad stuff to check for, .. for dir trav, %2e%2e for url encoded .., \x00 for null byte
