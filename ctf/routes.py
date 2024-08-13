@@ -39,7 +39,8 @@ RESOURCE_PATH = os.path.join(
 # favicon
 
 
-@app.route("/favicon.ico")
+@app.route("/favicon.ico" , methods=["GET"])
+
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/x-icon')
@@ -183,7 +184,7 @@ def register():
         render_template(
             "message.html",
             title="Register",
-            message="Registering is not implemented"),
+            message="Registering is not possible at the moment"),
         500,
     )
 
