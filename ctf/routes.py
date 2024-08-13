@@ -20,6 +20,10 @@ LOGINS = {"eileen": "FamousZebraFumbles75",
           "scotty": "you will never#@@guess this password"}
 
 app.secret_key = "MyUb3rSecr3tS355ionK3y" # key for sessions
+app.config['SESSION_COOKIE_HTTPONLY'] = True # ensure session cookie is httponly
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict' # ensure session cookie is same site
+app.config['REMEMBER_COOKIE_SECURE'] = True # ensure remember cookie is secure
+app.config['SESSION_COOKIE_SECURE'] = True # ensure session cookie is secure
 
 RESOURCE_PATH = os.path.join(app.root_path, 'resources') # Configure the allowed directory
 # favicon
