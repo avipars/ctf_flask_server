@@ -11,9 +11,14 @@ from werkzeug.utils import secure_filename
 from ctf import app
 
  # allowed files and their mime types 
-ALLOW_MIME = {'pdf': 'application/pdf', 'png': 'image/png',
-              'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-              'gif': 'image/gif', 'txt': 'text/plain'}
+ALLOW_MIME = {
+    "pdf": "application/pdf",
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "gif": "image/gif",
+    "txt": "text/plain",
+}
 # from user_agents import parse
 # from werkzeug.useragents import UserAgent
 
