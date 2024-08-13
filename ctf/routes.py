@@ -9,8 +9,9 @@ from markupsafe import escape
 from werkzeug.utils import secure_filename
 
 from ctf import app
-
- # allowed files and their mime types 
+import datetime
+import random
+# allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
     "png": "image/png",
@@ -25,7 +26,7 @@ ALLOW_MIME = {
 # Hardcoded logins
 LOGINS = {
     "eileen": "FamousZebraFumbles75",
-    "scotty": "you will never#@@guess this password",
+    "scotty": "youwillnever#@@guessthispassword",
 }
 
 app.secret_key = "MyUb3rSecr3tS355ionK3y"  # key for sessions
@@ -44,12 +45,12 @@ RESOURCE_PATH = os.path.join(
 # favicon
 
 
-@app.route("/favicon.ico" , methods=["GET"])
-
+@app.route("/favicon.ico", methods=["GET"])
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/x-icon')
-    
+
+
 @app.route('/files/<path:filename>')
 @app.route('/files', defaults={'filename': ''})
 def serve_file(filename):
@@ -59,7 +60,6 @@ def serve_file(filename):
     # filename = secure_filename(filename) # sanitize the filename
     if "token" not in session:
         abort(401)
-
 
     path = validate_path(filename)
     if not path or not filename:
@@ -83,9 +83,8 @@ def serve_file(filename):
     )
 
 
-
 def validate_path(path):
-    print(f"Allowed dir {RESOURCE_PATH} VPath: {path}")
+    # print(f"Allowed dir {RESOURCE_PATH} VPath: {path}")
     # ensure path is within the allowed directory
     absolute_path = os.path.join(RESOURCE_PATH, path)
     if not absolute_path.startswith(RESOURCE_PATH):
@@ -101,7 +100,6 @@ def validate_path(path):
     return absolute_path
 
 
-
 def allowed_type(filename, exts=ALLOW_MIME):
     """
     file types that are allowed to be shown to user
@@ -114,9 +112,9 @@ def allowed_type(filename, exts=ALLOW_MIME):
         ".", 1)[1].lower() in exts.keys()
 
 
-
 def is_bad(path):
-    bad_stuff = ('..', '%2e%2e', '\x00','%00') # bad stuff to check for, .. for dir trav, %2e%2e for url encoded .., \x00 for null byte
+    # bad stuff to check for, .. for dir trav, %2e%2e for url encoded .., \x00 for null byte
+    bad_stuff = ('..', '%2e%2e', '\x00', '%00')
     for bad in bad_stuff:
         if bad in path:
             return True
@@ -132,11 +130,12 @@ def index():
         "home.html", title="Welcome to ColaCo's Website"), 200
 
 
-
 @app.route("/logout", methods=["GET"])
 @app.route("/logout.html", methods=["GET"])
 def logout():
+    session.pop("username", None)  # remove the username from the session
     session.pop("token", None)  # remove the token from the session
+    session.pop("sales_data", None)  # remove the sales data from the session
     return redirect(url_for("index"), code=302)
 
 
@@ -151,19 +150,21 @@ def login():
         user = session["username"]
         return redirect(url_for("admin", username=user), code=302)
 
-
     error = None
     msg = request.args.get("msg")
     if msg:
         error = msg
 
+    # if POST, then check if user and password are correct (login sequence)
     if request.method == "POST":
-        user = request.form.get("username")
-        password = request.form.get("password")
+        user = request.form.get("username", "")
+        password = request.form.get("password", "")
         # Basic input validation (e.g., disallowing certain characters)
-        basic_val = "^[a-zA-Z0-9_]+$"
-        basic_val = "^[a-zA-Z0-9_]+$"
-        if not re.match(basic_val, user) or not re.match(basic_val, password):
+        # limit username to alphanumeric and underscore
+        basic_val_user = "^[a-zA-Z0-9_]+$"
+        # limit password to alphanumeric and some special characters
+        basic_val_pass = "^[a-zA-Z0-9_@#\$%!&*()+-]+$"
+        if not re.match(basic_val_user, user) or not re.match(basic_val_pass, password):
             logging.error(
                 f"Invalid characters in username or password: {user} {password}"
             )
@@ -176,8 +177,9 @@ def login():
                     url_for("admin", username=user), code=302
                 )  # redirect to admin.html
             else:
-                logging.error(f"Wrong user or password: {user} {password}")
                 error = "Wrong user or password"
+                logging.error(f"{error}: {user} {password}")
+
     return render_template("login.html", error=error), 200
 
 
@@ -202,10 +204,48 @@ def admin():
     if "token" not in session:
         abort(403)
     else:
-        user = request.args.get("username")
-        return render_template(
-            "dash.html", username=user, title="User Panel"), 200
+        user = request.args.get("username", None)
+        # set year to 2029
+        current_time = datetime.datetime.now().replace(
+            year=2029).strftime("%Y-%m-%d %H:%M:%S")
 
+        notifications = 1 # number of notifications
+        if "sales_data" not in session:
+            sales = make_sales_data()
+            session["sales_data"] = sales # store in session
+        else:
+            sales = session["sales_data"] # get from session
+        return render_template(
+            "dash.html", username=user, title="User Panel", current_time=current_time, sales_data=sales, notifications=notifications
+        ), 200
+
+
+def make_sales_data():
+    data = []
+    today = datetime.datetime.now().replace(year=2029)
+    for i in range(0,8):
+        date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
+        
+        sales = random.randint(15, 573)
+        reach = random.randint(25, 1000)
+        # Profit is a random percentage of sales, but higher sales mean a higher chance of a better profit margin
+        profit_margin = random.uniform(0.3, 0.6) + (sales - 200) / 500 * random.uniform(0.1, 0.2)
+        profit = int(sales * profit_margin)
+        data.append({
+            "date": date,
+            "sales": sales,
+            "reach": reach,
+            "profit": profit
+        })
+        
+    # Calculate the max sales value to normalize the bar heights
+    max_sales = max(item['sales'] for item in data)
+    normalized_sales_data = [
+            {"date": item["date"], "sales": int((item["sales"] / max_sales) * 5), "reach": item["reach"], "profit": item["profit"]}
+            for item in data
+        ]
+        
+    return normalized_sales_data[::-1] #old to new
 
 def escape_path_traversal(path):
     while "." in path:
@@ -273,7 +313,6 @@ def list_files():
         abort(401)  # login required
 
 
-
 @app.before_request
 def before_request():
     """check user agent and IP"""
@@ -287,7 +326,7 @@ def extract_ip():  # get the ip of the user (and store it in a global variable)
     """get the IP of the user"""
     try:
         # avoid's pythonanywhere load balancer IP
-        ip = request.headers["X-Real-IP"]
+        ip = request.headers["X-Real-IP"]  # get the real IP
     except KeyError:  # if no X-Real-IP header, mainly for local-tests
         # get port too
         if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
@@ -315,7 +354,6 @@ def unsupported_media_type(e):
     )
 
 
-
 @app.errorhandler(400)
 def bad_request(e):
     # note that we set the 400 status explicitly
@@ -328,7 +366,6 @@ def bad_request(e):
         ),
         400,
     )
-
 
 
 @app.errorhandler(401)
@@ -345,7 +382,6 @@ def unauthorized(e):
     )
 
 
-
 @app.errorhandler(403)
 def forbidden(e):
     # note that we set the 403 status explicitly
@@ -360,14 +396,11 @@ def forbidden(e):
     )
 
 
-
-
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
     logging.error(f"404: {request.url}")
     return render_template("404.html"), 404
-
 
 
 @app.errorhandler(500)

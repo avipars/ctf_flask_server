@@ -5,33 +5,89 @@
 
 {% endblock %}
 {% block content %}
-<p class="important">
-    {{ title }}
-</p>
+<div class="container">
 
-<!-- if username is set -->
-{% if username %}
-<p>
-    Hello, {{ username }}
-</p>
-{% endif %}
 
-<!-- <p>
-    latest memo 
-    <a href="{{ url_for('static', filename='company_memo.pdf') }}">Click Here</a> to see the latest memo
-</p> 
- offer the list_directory option -->
+    <h1 class="important">
+        {{ title }}
+    </h1>
 
-<!-- logout button -->
 
-<p>
-    <a href="{{ url_for('logout') }}">Click Here</a> to logout
 
-<p>
-    <a href="{{ url_for('list_files', directory='inbox') }}">Click Here</a> to see the list of directories
-</p>
+    <header>
+        
+        <!-- if username is set -->
+        {% if username is defined and username %}
+        <p>
+            Hello, {{ username }}
+        </p>
+        {% endif %}
+        
+        <p>Current Time: {{ current_time }}</p>
 
-<p>
-    <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}">Click Here</a> to see the latest memo
-</p>
-{% endblock %}
+    </header>
+
+
+
+    <section class="stats">
+        <h2>Sales Data</h2>
+        <div class="chart">
+            {% for data in sales_data %}
+            <div class="bar" style="height: {{ data.profit }}px;">
+                ${{ data.profit }}
+                <div class="label">{{ data.sales }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Sales</th>
+                    <th>Reach</th>
+                    <th>Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in sales_data %}
+                <tr>
+                    <td>{{ data.date }}</td>
+                    <td>{{ data.sales }}</td>
+                    <td>{{ data.reach }}</td>
+                    <td>${{ data.profit }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+
+    <div class="notifications">
+        <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}" class="notification-link">
+            <div class="notification-icon">
+                <span class="notification-count">{{ notifications }}</span>
+            </div>
+            <span class="notification-textd">New Message</span>
+        </a>
+    </div>
+
+    <div class="links">
+
+        <p>
+            <!-- turn to button, not link -->
+            <a href="{{ url_for('logout') }}">Click Here</a> to logout
+
+        <p>
+            <a href="{{ url_for('list_files', directory='inbox') }}">Click Here</a> to see the list of directories
+        </p>
+
+        <!-- <p>
+            View the <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}">latest memo</a>
+        </p> -->
+        {% endblock %}
+
+    </div>
+
+
+
+</div>
