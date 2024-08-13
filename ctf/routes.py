@@ -44,15 +44,15 @@ RESOURCE_PATH = os.path.join(
 
 # favicon
 
-
 @app.route("/favicon.ico", methods=["GET"])
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/x-icon')
 
 
-@app.route('/files/<path:filename>')
-@app.route('/files', defaults={'filename': ''})
+@app.route("/files/<path:filename>", methods=["GET"])
+@app.route("/files", defaults={"filename": ""} , methods=["GET"])
+
 def serve_file(filename):
     """
     in charge of serving files from the /resources directory
@@ -223,7 +223,7 @@ def admin():
 def make_sales_data():
     data = []
     today = datetime.datetime.now().replace(year=2029)
-    for i in range(0,8):
+    for i in range(0, 8):
         date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
         
         sales = random.randint(15, 573)
@@ -239,7 +239,7 @@ def make_sales_data():
         })
         
     # Calculate the max sales value to normalize the bar heights
-    max_sales = max(item['sales'] for item in data)
+    max_sales = max(item["sales"] for item in data)
     normalized_sales_data = [
             {"date": item["date"], "sales": int((item["sales"] / max_sales) * 5), "reach": item["reach"], "profit": item["profit"]}
             for item in data
