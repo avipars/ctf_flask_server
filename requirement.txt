@@ -18,3 +18,4 @@ rich==13.7.1
 typing_extensions==4.12.2
 Werkzeug==3.0.3
 wrapt==1.16.0
+gunicorn
