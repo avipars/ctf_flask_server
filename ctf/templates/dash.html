@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block head %}
+{{ super() }}
+
+{% endblock %}
+{% block content %}
+<p class="important">
+    {{ title }}
+</p>
+
+<!-- if username is set -->
+{% if username %}
+<p>
+    Hello, {{ username }}
+</p>
+{% endif %}
+
+<!-- <p>
+    latest memo 
+    <a href="{{ url_for('static', filename='company_memo.pdf') }}">Click Here</a> to see the latest memo
+</p> 
+ offer the list_directory option -->
+
+<!-- logout button -->
+
+<p>
+    <a href="{{ url_for('logout') }}">Click Here</a> to logout
+
+<p>
+    <a href="{{ url_for('list_files', directory='inbox') }}">Click Here</a> to see the list of directories
+</p>
+
+<p>
+    <a href="{{ url_for('serve_file', filename='inbox/company.pdf') }}">Click Here</a> to see the latest memo
+</p>
+{% endblock %}

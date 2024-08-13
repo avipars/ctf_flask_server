@@ -1,0 +1,9 @@
+# block everything from being indexed
+# User-agent: *
+# Disallow: / 
+
+# block the login page, and reports directory but allow the rest
+User-agent: *
+Disallow: /login
+Disallow: /reports/*
+Sitemap: http://colaco.website/sitemap.xml

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<html>
+
+<head>
+    {% block head %}
+    <title>{% block title %}{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="stylesheet" type= "text/css" href="{{ url_for('static', filename='css/style.css') }}"/>
+    {% endblock %}
+</head>
+
+<body>
+    
+    <div id="content">{% block content %}{% endblock %}</div>
+
+    <div id="footer">
+        {% block footer %}
+        <footer class="site-footer">
+
+            <span class="site-footer-owner">&copy; 2029
+                <a href="http://colaco.website"
+                    target="_blank">ColaCo.website</a></span>
+
+        </footer>
+        {% endblock %}
+    </div>
+</body>
+
+</html>

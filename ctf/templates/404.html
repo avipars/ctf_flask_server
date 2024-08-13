@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+<!-- Exports header and navbar from header.html 
+     or any file you want-->
+{% block title %}Page Not Found{% endblock %} 
+
+{% block head %}
+{{ super() }}
+
+{% endblock %}
+
+{% block content %}
+<h1 class="error">
+  {{ "404 Page Not Found" }}
+</h1>
+
+{% block body %}
+  <h2>Oops! Looks like the page doesn't exist anymore</h2> 
+  <a href="{{ url_for('index') }}">Click Here</a> to go to the Home Page
+
+{% endblock %}
+
+{% endblock %} 

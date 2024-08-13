@@ -1,0 +1,5 @@
+{
+    "pylint.path": [
+        "\"D:\\NewComp\\DevProjects\\JCT\\Networking\\comms2_ctf\\flask_server\\.venv\\Lib\\site-packages\""
+    ]
+}

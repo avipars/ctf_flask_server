@@ -1,0 +1,18 @@
+/* change font */
+body {
+    font-family: 'Arial', sans-serif;
+}
+/* change color */
+.important{
+    color: #336699;
+}
+
+.error {
+    color: red;
+}
+
+div {
+    border: 1px solid #000;
+    margin: 10px;
+    padding: 10px;
+}

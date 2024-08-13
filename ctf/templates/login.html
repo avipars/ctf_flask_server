@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}{{ title }} {% endblock %}
+{% block head %}
+{{ super() }}
+<style type="text/css">
+    .important {
+        color: #336699;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<p class="important">
+    {{ title }}
+</p>
+
+<!-- login page and credentials are sent to backend via post -->
+
+<form method="POST" action="">
+    <label for="username">Username:</label><br>
+    <input type="text" id="username" name="username"><br>
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password"><br><br>
+    <input type="submit" value="Submit">
+</form>
+    
+
+<!-- print the error if it is not None -->
+{% if error %}
+<p class="error"><strong>Error:</strong> {{ error }}
+{% endif %}
+
+
+{% endblock %}
