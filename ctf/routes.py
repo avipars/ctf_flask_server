@@ -1,5 +1,7 @@
+import datetime
 import logging
 import os
+import random
 import re  # regex
 import uuid
 
@@ -9,8 +11,7 @@ from markupsafe import escape
 from werkzeug.utils import secure_filename
 
 from ctf import app
-import datetime
-import random
+
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
@@ -44,15 +45,19 @@ RESOURCE_PATH = os.path.join(
 
 # favicon
 
+
 @app.route("/favicon.ico", methods=["GET"])
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/x-icon')
+    return send_from_directory(
+        os.path.join(
+            app.root_path,
+            "static"),
+        "favicon.ico",
+        mimetype="image/x-icon")
 
 
 @app.route("/files/<path:filename>", methods=["GET"])
-@app.route("/files", defaults={"filename": ""} , methods=["GET"])
-
+@app.route("/files", defaults={"filename": ""}, methods=["GET"])
 def serve_file(filename):
     """
     in charge of serving files from the /resources directory
@@ -113,8 +118,9 @@ def allowed_type(filename, exts=ALLOW_MIME):
 
 
 def is_bad(path):
-    # bad stuff to check for, .. for dir trav, %2e%2e for url encoded .., \x00 for null byte
-    bad_stuff = ('..', '%2e%2e', '\x00', '%00')
+    # bad stuff to check for, .. for dir trav, %2e%2e for url encoded .., \x00
+    # for null byte
+    bad_stuff = ("..", "%2e%2e", "\x00", "%00")
     for bad in bad_stuff:
         if bad in path:
             return True
@@ -163,8 +169,12 @@ def login():
         # limit username to alphanumeric and underscore
         basic_val_user = "^[a-zA-Z0-9_]+$"
         # limit password to alphanumeric and some special characters
-        basic_val_pass = "^[a-zA-Z0-9_@#\$%!&*()+-]+$"
-        if not re.match(basic_val_user, user) or not re.match(basic_val_pass, password):
+        basic_val_pass = "^[a-zA-Z0-9_@#\\$%!&*()+-]+$"
+        if not re.match(
+                basic_val_user,
+                user) or not re.match(
+                basic_val_pass,
+                password):
             logging.error(
                 f"Invalid characters in username or password: {user} {password}"
             )
@@ -191,7 +201,8 @@ def register():
         render_template(
             "message.html",
             title="Register",
-            message="Registering is not possible at the moment"),
+            message="Registering is not possible at the moment",
+        ),
         500,
     )
 
@@ -206,18 +217,27 @@ def admin():
     else:
         user = request.args.get("username", None)
         # set year to 2029
-        current_time = datetime.datetime.now().replace(
-            year=2029).strftime("%Y-%m-%d %H:%M:%S")
+        current_time = (
+            datetime.datetime.now().replace(
+                year=2029).strftime("%Y-%m-%d %H:%M:%S"))
 
-        notifications = 1 # number of notifications
+        notifications = 1  # number of notifications
         if "sales_data" not in session:
             sales = make_sales_data()
-            session["sales_data"] = sales # store in session
+            session["sales_data"] = sales  # store in session
         else:
-            sales = session["sales_data"] # get from session
-        return render_template(
-            "dash.html", username=user, title="User Panel", current_time=current_time, sales_data=sales, notifications=notifications
-        ), 200
+            sales = session["sales_data"]  # get from session
+        return (
+            render_template(
+                "dash.html",
+                username=user,
+                title="User Panel",
+                current_time=current_time,
+                sales_data=sales,
+                notifications=notifications,
+            ),
+            200,
+        )
 
 
 def make_sales_data():
@@ -225,27 +245,31 @@ def make_sales_data():
     today = datetime.datetime.now().replace(year=2029)
     for i in range(0, 8):
         date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
-        
+
         sales = random.randint(15, 573)
         reach = random.randint(25, 1000)
-        # Profit is a random percentage of sales, but higher sales mean a higher chance of a better profit margin
-        profit_margin = random.uniform(0.3, 0.6) + (sales - 200) / 500 * random.uniform(0.1, 0.2)
+        # Profit is a random percentage of sales, but higher sales mean a
+        # higher chance of a better profit margin
+        profit_margin = random.uniform(
+            0.3, 0.6) + (sales - 200) / 500 * random.uniform(0.1, 0.2)
         profit = int(sales * profit_margin)
-        data.append({
-            "date": date,
-            "sales": sales,
-            "reach": reach,
-            "profit": profit
-        })
-        
+        data.append({"date": date, "sales": sales,
+                    "reach": reach, "profit": profit})
+
     # Calculate the max sales value to normalize the bar heights
     max_sales = max(item["sales"] for item in data)
     normalized_sales_data = [
-            {"date": item["date"], "sales": int((item["sales"] / max_sales) * 5), "reach": item["reach"], "profit": item["profit"]}
-            for item in data
-        ]
-        
-    return normalized_sales_data[::-1] #old to new
+        {
+            "date": item["date"],
+            "sales": int((item["sales"] / max_sales) * 5),
+            "reach": item["reach"],
+            "profit": item["profit"],
+        }
+        for item in data
+    ]
+
+    return normalized_sales_data[::-1]  # old to new
+
 
 def escape_path_traversal(path):
     while "." in path:
