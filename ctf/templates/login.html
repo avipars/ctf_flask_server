@@ -13,7 +13,7 @@
     {{ title }}
 </p>
 
-<!-- login page and credentials are sent to backend via post -->
+{#<!-- login page and credentials are sent to backend via post -->#}
 <div class="login-page">
     <div class="form">
 
@@ -30,7 +30,7 @@
             </div>
             <input type="submit" value="Submit" class="btn btn-primary">
         </form>
-        <!-- print the error if it is not None -->
+        {#<!-- print the error if it is not None -->#}
         {% if error is defined and error %}
         <p class="error"><strong>Error:</strong> {{ error }}
         {% endif %}

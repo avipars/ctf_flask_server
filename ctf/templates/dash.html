@@ -16,7 +16,7 @@
 
     <header>
         
-        <!-- if username is set -->
+        {#<!-- if username is set -->#}
         {% if username is defined and username %}
         <p>
             Hello, {{ username }}
@@ -74,16 +74,15 @@
     <div class="links">
 
         <p>
-            <!-- turn to button, not link -->
+            {# turn to button, not link #}
             <a href="{{ url_for('logout') }}">Click Here</a> to logout
 
         <p>
             <a href="{{ url_for('list_files', directory='inbox') }}">Click Here</a> to see the list of directories
         </p>
 
-        <!-- <p>
-            View the <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}">latest memo</a>
-        </p> -->
+        {#<p>View the <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}">latest memo</p> #}
+        
         {% endblock %}
 
     </div>
