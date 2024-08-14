@@ -15,14 +15,14 @@
 
 
     <header>
-        
+
         {#<!-- if username is set -->#}
         {% if username is defined and username %}
         <p>
             Hello, {{ username }}
         </p>
         {% endif %}
-        
+
         <p>Current Time: {{ current_time }}</p>
 
     </header>
@@ -82,11 +82,7 @@
         </p>
 
         {#<p>View the <a href="{{ url_for('serve_file', filename='inbox/company_memo.pdf') }}">latest memo</p> #}
-        
+
         {% endblock %}
-
     </div>
-
-
-
 </div>
