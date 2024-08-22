@@ -6,12 +6,15 @@ import re  # regex
 import uuid
 
 from flask import (abort, redirect, render_template, render_template_string,
-                   request, send_from_directory, session, url_for)
+                   request, send_from_directory, session, url_for, jsonify, Response, abort)
 from markupsafe import escape
 from werkzeug.utils import secure_filename
+import base64
+import random
 
 from ctf import app
 
+right_values=False 
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
@@ -42,6 +45,68 @@ RESOURCE_PATH = os.path.join(
     app.root_path, "resources"
 )  # Configure the allowed directory
 
+# Define the virtual file system
+virtual_file_system = {
+    "root": {
+        "folder1": {
+            "file1.txt": "This is the content of file1.txt",
+            "subfolder1": {
+                "file2.txt": "This is the content of file2.txt"
+            }
+        },
+        "folder2": {
+            "file3.txt": "This is the content of file3.txt",
+            "subfolder2": {
+                "file4.txt": "This is the content of file4.txt",
+                "subsubfolder1": {
+                    "file5.txt": "This is the content of file5.txt"
+                }
+            }
+        }
+    }
+}
+
+
+# Helper function to traverse the virtual file system
+def traverse_virtual_fs(path_parts, current_dir):
+    global right_values
+    if not right_values:
+        abort(403)
+        
+    if not path_parts:
+        return current_dir  # Return the current directory or file content
+    part = path_parts.pop(0)
+    if part in current_dir:
+        return traverse_virtual_fs(path_parts, current_dir[part])
+    else:
+        # print the root directory
+        return virtual_file_system['root']
+        abort(404)  # If the path part doesn't exist, return 404
+
+@app.route('/files2/<path:file_path>', methods=['GET'])
+def get_file(file_path):
+    
+    ua = request.headers.get('User-Agent','')
+    ref = request.headers.get('Referer','')
+    if 'colaco' not in ua.lower():
+        return 'Only ColaCo employees are allowed to access this resource', 403
+    print(f"User-Agent: {ua} Referer: {ref}")
+    path_parts = file_path.split('/')
+    content = traverse_virtual_fs(path_parts, virtual_file_system['root'])
+
+    
+    if isinstance(content, dict):
+        # It's a directory, return its contents as JSON
+        return jsonify({"contents": list(content.keys())})
+    else:
+        # It's a file, return its content
+        return Response(content, mimetype="text/plain")
+
+def obfuscate(content):
+    return base64.b64encode(content.encode()).decode()
+
+def deobfuscate(content):
+    return base64.b64decode(content.encode()).decode()
 
 # favicon
 
@@ -290,7 +355,9 @@ def list_files():
             base_dir = RESOURCE_PATH
             # Get the directory to list files from, default to base_dir if not
             # specified
-            directory = request.args.get("directory", "")
+            directory = request.args.get("directory", None)
+            if not directory:
+                abort(400)
             directory_path = os.path.normpath(
                 os.path.join(base_dir, directory)
             )  # Construct the full path
@@ -344,8 +411,18 @@ def before_request():
     user_agent = request.headers.get("User-Agent")
     # user_agent = UserAgent(request.headers.get("User-Agent"))
     print(f"IP: {ip} User-Agent: {user_agent}")
-
-
+    # get the referrer
+    referer = request.referrer
+    print(f"Referer: {referer}")
+    # origin
+    origin = request.headers.get("Origin")
+    print(f"Origin: {origin}")
+    if referer != "https://www.colaco.website" and origin != "https://www.colaco.website" and user_agent != "ColaCoBot":
+        logging.warning(f"Invalid referer or origin: {referer} {origin} {user_agent}")
+        
+    else:
+        right_values=True
+        logging.info(f"Valid referer and origin: {referer} {origin} {user_agent}")
 def extract_ip():  # get the ip of the user (and store it in a global variable)
     """get the IP of the user"""
     try:
