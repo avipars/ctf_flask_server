@@ -9,3 +9,6 @@ Disallow: /reports/*
 Sitemap: http://colaco.website/sitemap.xml
 
 # this site is for illustrative purposes only, and is not a real site
+
+User-agent: ColaCoBot
+allow: /login

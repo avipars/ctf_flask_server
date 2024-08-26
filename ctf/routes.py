@@ -80,17 +80,16 @@ def traverse_virtual_fs(path_parts, current_dir):
         return traverse_virtual_fs(path_parts, current_dir[part])
     else:
         # print the root directory
-        return virtual_file_system['root']
+        # return virtual_file_system['root']
         abort(404)  # If the path part doesn't exist, return 404
 
 @app.route('/files2/<path:file_path>', methods=['GET'])
 def get_file(file_path):
     
-    ua = request.headers.get('User-Agent','')
-    ref = request.headers.get('Referer','')
-    if 'colaco' not in ua.lower():
+    global right_values
+    if not right_values:
+        print("Only ColaCo employees are allowed to access this resource")
         return 'Only ColaCo employees are allowed to access this resource', 403
-    print(f"User-Agent: {ua} Referer: {ref}")
     path_parts = file_path.split('/')
     content = traverse_virtual_fs(path_parts, virtual_file_system['root'])
 
@@ -416,13 +415,15 @@ def before_request():
     print(f"Referer: {referer}")
     # origin
     origin = request.headers.get("Origin")
+    global right_values
     print(f"Origin: {origin}")
     if referer != "https://www.colaco.website" and origin != "https://www.colaco.website" and user_agent != "ColaCoBot":
         logging.warning(f"Invalid referer or origin: {referer} {origin} {user_agent}")
-        
+        right_values = False
     else:
-        right_values=True
+        right_values = True
         logging.info(f"Valid referer and origin: {referer} {origin} {user_agent}")
+
 def extract_ip():  # get the ip of the user (and store it in a global variable)
     """get the IP of the user"""
     try:
