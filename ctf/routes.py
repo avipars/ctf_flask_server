@@ -23,6 +23,7 @@ ALLOW_MIME = {
     "jpeg": "image/jpeg",
     "gif": "image/gif",
     "txt": "text/plain",
+    "pcapng": "application/vnd.tcpdump.pcap",
 }
 # from user_agents import parse
 # from werkzeug.useragents import UserAgent
@@ -45,59 +46,6 @@ RESOURCE_PATH = os.path.join(
     app.root_path, "resources"
 )  # Configure the allowed directory
 
-# Define the virtual file system
-virtual_file_system = {
-    "root": {
-        "folder1": {
-            "file1.txt": "This is the content of file1.txt",
-            "subfolder1": {
-                "file2.txt": "This is the content of file2.txt"
-            }
-        },
-        "folder2": {
-            "file3.txt": "This is the content of file3.txt",
-            "subfolder2": {
-                "file4.txt": "This is the content of file4.txt",
-                "subsubfolder1": {
-                    "file5.txt": "This is the content of file5.txt"
-                }
-            }
-        }
-    }
-}
-
-
-# Helper function to traverse the virtual file system
-def traverse_virtual_fs(path_parts, current_dir):
-    global right_values
-    if not right_values:
-        abort(403)
-        
-    if not path_parts:
-        return current_dir  # Return the current directory or file content
-    part = path_parts.pop(0)
-    if part in current_dir:
-        return traverse_virtual_fs(path_parts, current_dir[part])
-    else:
-        # print the root directory
-        # return virtual_file_system['root']
-        abort(404)  # If the path part doesn't exist, return 404
-
-@app.route('/files2/<path:file_path>', methods=['GET'])
-def get_file(file_path):
-    
-    global right_values
-    if not right_values:
-        print("Only ColaCo employees are allowed to access this resource")
-        return 'Only ColaCo employees are allowed to access this resource', 403
-    path_parts = file_path.split('/')
-    content = traverse_virtual_fs(path_parts, virtual_file_system['root'])
-    if isinstance(content, dict):
-        # It's a directory, return its contents as JSON
-        return jsonify({"contents": list(content.keys())})
-    else:
-        # It's a file, return its content
-        return Response(content, mimetype="text/plain")
 
 def obfuscate(content):
     return base64.b64encode(content.encode()).decode()
@@ -149,11 +97,13 @@ def serve_file(filename):
             200,
         )
     except RuntimeError as e:
-        if "Response payload too large" in str(e): #try to catch vercel limit error
-            # Redirect to a third-party URL if the payload is too large
-            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
-    # For other runtime errors, raise them
-    raise e     
+        return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
+
+    #     if "Response payload too large" in str(e): #try to catch vercel limit error
+    #         # Redirect to a third-party URL if the payload is too large
+    #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
+    # # For other runtime errors, raise them
+    # raise e     
 
 
 def validate_path(path):
