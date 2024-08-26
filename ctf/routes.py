@@ -29,7 +29,7 @@ ALLOW_MIME = {
 
 # Hardcoded logins
 LOGINS = {
-    "eileen": "FamousZebraFumbles75",
+    "eileen": "Postal-Tummy8-Caution",
     "scotty": "youwillnever#@@guessthispassword",
 }
 
@@ -92,8 +92,6 @@ def get_file(file_path):
         return 'Only ColaCo employees are allowed to access this resource', 403
     path_parts = file_path.split('/')
     content = traverse_virtual_fs(path_parts, virtual_file_system['root'])
-
-    
     if isinstance(content, dict):
         # It's a directory, return its contents as JSON
         return jsonify({"contents": list(content.keys())})
@@ -140,16 +138,22 @@ def serve_file(filename):
             ALLOW_MIME):  # Check file extension if needed
         logging.error(f"Invalid file extension: {filename}")
         abort(415)
-
-    return (
-        send_from_directory(
-            RESOURCE_PATH,
-            filename,
-            as_attachment=True,
-            mimetype=ALLOW_MIME[filename.rsplit(".", 1)[1].lower()],
-        ),
-        200,
-    )
+    try: 
+        return (
+            send_from_directory(
+                RESOURCE_PATH,
+                filename,
+                as_attachment=True,
+                mimetype=ALLOW_MIME[filename.rsplit(".", 1)[1].lower()],
+            ),
+            200,
+        )
+    except RuntimeError as e:
+        if "Response payload too large" in str(e): #try to catch vercel limit error
+            # Redirect to a third-party URL if the payload is too large
+            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
+    # For other runtime errors, raise them
+    raise e     
 
 
 def validate_path(path):
@@ -419,7 +423,7 @@ def before_request():
     print(f"Origin: {origin}")
     if referer != "https://www.colaco.website" and origin != "https://www.colaco.website" and user_agent != "ColaCoBot":
         logging.warning(f"Invalid referer or origin: {referer} {origin} {user_agent}")
-        right_values = False
+        right_values = True #change later
     else:
         right_values = True
         logging.info(f"Valid referer and origin: {referer} {origin} {user_agent}")
