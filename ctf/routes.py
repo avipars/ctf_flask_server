@@ -15,7 +15,7 @@ import json
 from ctf import app
 
 
-right_values = False # if they have right http headers 
+right_values = False # if they have right http headers  TODO change to false
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
@@ -230,8 +230,9 @@ def register():
             "error.html",
             title="Register",
             message="Registering is not possible at the moment",
-        ),
-        500,
+        ), 500
+        # 500, pass the error to be logged by the error handler
+        
     )
 
 
@@ -367,14 +368,21 @@ def list_files():
     else:
         abort(401)  # login required
 
-@app.route('/file_home')
+@app.route('/file_home', methods=["GET"])
+@app.route('/file_home.html', methods=["GET"])
 def file_home():
+    
     # Directory path to list
     base_dir = RESOURCE_PATH
+    directory = request.args.get("directory", None)
 
-    directory_path = os.path.normpath(
-                os.path.join(base_dir, directory)
-            )
+    if directory:
+        directory_path = os.path.normpath(
+                    os.path.join(base_dir, directory)
+                )
+        print(f"Directory path: {directory_path}")
+    else:
+        directory_path = os.path.normpath(base_dir)
     
     # List files in the directory
     directory = [{'name': f} for f in os.listdir(directory_path)]
@@ -384,9 +392,8 @@ def file_home():
 @app.route('/filefu/<filename>')
 def file_detail(filename):
     # Logic to display file details or content
-    # let user download 
-    
     return f"Details for {filename}"
+
 
 @app.before_request
 def before_request():
@@ -404,7 +411,7 @@ def before_request():
     print(f"Origin: {origin}")
     if referer != "https://www.colaco.website" and origin != "https://www.colaco.website" and user_agent != "ColaCoBot":
         logging.warning(f"Invalid referer or origin: {referer} {origin} {user_agent}")
-        right_values = True #change later
+        # right_values = False # TODO change later - uncomment
     else:
         right_values = True
         logging.info(f"Valid referer and origin: {referer} {origin} {user_agent}")
@@ -426,81 +433,6 @@ def extract_ip():  # get the ip of the user (and store it in a global variable)
             f"Error: No X-Real-IP header, using remote_addr {ip} {port}")
     return ip
 
-
-@app.errorhandler(415)
-def unsupported_media_type(e):
-    # note that we set the 415 status explicitly
-    logging.error(f"415: {request.url}")
-    return (
-        render_template(
-            "error.html",
-            title="415 Unsupported Media Type",
-            message="Sorry, the server cannot process the media type",
-        ),
-        415,
-    )
-
-
-@app.errorhandler(400)
-def bad_request(e):
-    # note that we set the 400 status explicitly
-    logging.error(f"400: {request.url}")
-    return (
-        render_template(
-            "error.html",
-            title="400 Bad Request",
-            message="Sorry, your request could not be processed",
-        ),
-        400,
-    )
-
-
-@app.errorhandler(401)
-def unauthorized(e):
-    # note that we set the 401 status explicitly
-    logging.error(f"401: {request.url}")
-    return (
-        render_template(
-            "error.html",
-            title="401 Unauthorized",
-            message="Sorry, your request could not be processed",
-        ),
-        401,
-    )
-
-
-@app.errorhandler(403)
-def forbidden(e):
-    # note that we set the 403 status explicitly
-    logging.error(f"403: {request.url}")
-    return (
-        render_template(
-            "error.html",
-            title="403 Forbidden",
-            message="Access to this resource on this server is forbidden",
-        ),
-        403,
-    )
-
-
-@app.errorhandler(404)
-def page_not_found(e):
-    # note that we set the 404 status explicitly
-    logging.error(f"404: {request.url}")
-    return render_template("404.html"), 404
-
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    # note that we set the 500 status explicitly
-    logging.error(f"500: {request.url}")
-    return (
-        render_template(
-            "error.html",
-            title="500 Internal Server Error",
-            message="Try again later"),
-        500,
-    )
 
 
 if __name__ == "__main__":

@@ -7,9 +7,20 @@
     <ul>
         {% for item in directory %}
         <li>
-            <a href="{{ url_for('file_detail', filename=item.name) }}">
+            <!-- if file  -->
+            {% if not item.is_dir %}
+
+            <a href="{{ url_for('serve_file', filename=item.name) }}">
                 {{ item.name }}
             </a>
+            <!-- if subdirectory -->
+            {% else %}
+            <a href="{{ url_for('list_files', directory=item.name) }}">
+                {{ item.name }}
+            </a>
+            {% endif %}
+            <!-- if subdirectory -->
+            
         </li>
         {% endfor %}
     </ul>

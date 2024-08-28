@@ -13,4 +13,4 @@ app = Flask(
 
 # register_error_handlers(app)
 # app.config['referrer_policy'] = 'strict-origin-when-cross-origin'
-from ctf import routes
+from ctf import routes, errors
