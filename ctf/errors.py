@@ -58,6 +58,15 @@ def forbidden(e):
         403,
     )
 
+# TODO test if this works with vercel
+# Error handler for 413 Payload Too Large
+@app.errorhandler(413)
+def payload_too_large_error(error):
+    # Log the error (optional)
+    app.logger.error(f"Payload Too Large: {error}")
+    # Render the custom error page
+    return render_template('error.html', title="413 Payload Too Large", message="use the mirror site"), 413
+
 
 @app.errorhandler(404)
 def page_not_found(e):
