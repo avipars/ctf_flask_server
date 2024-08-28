@@ -9,7 +9,7 @@ import uuid
 from random import randint, uniform
 
 from flask import (abort, redirect, render_template, render_template_string,
-                   request, send_from_directory, session, url_for)
+                   request, send_from_directory, session, url_for, abort)
 from markupsafe import escape
 
 from ctf import app
