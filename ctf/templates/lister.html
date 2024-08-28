@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Directory Listings{% endblock %}
+
+{% block content %}
+    <h2>Directory Listings</h2>
+    <ul>
+        {% for item in directory %}
+        <li>
+            <a href="{{ url_for('file_detail', filename=item.name) }}">
+                {{ item.name }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -11,14 +11,16 @@ from markupsafe import escape
 from werkzeug.utils import secure_filename
 import base64
 import random
-
+import json
 from ctf import app
 
-right_values=False 
+
+right_values = False # if they have right http headers 
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
     "png": "image/png",
+    "ico": "image/x-icon",
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
     "gif": "image/gif",
@@ -28,11 +30,10 @@ ALLOW_MIME = {
 # from user_agents import parse
 # from werkzeug.useragents import UserAgent
 
-# Hardcoded logins
-LOGINS = {
-    "eileen": "Postal-Tummy8-Caution",
-    "scotty": "youwillnever#@@guessthispassword",
-}
+LOGINS = {} 
+YEAR = 2029
+with open('logins.json') as f: # load the logins from the file
+    LOGINS = json.load(f)
 
 app.secret_key = "MyUb3rSecr3tS355ionK3y"  # key for sessions
 # ensure session cookie is httponly
@@ -53,11 +54,12 @@ def obfuscate(content):
 def deobfuscate(content):
     return base64.b64decode(content.encode()).decode()
 
-# favicon
-
 
 @app.route("/favicon.ico", methods=["GET"])
 def favicon():
+    """
+    serve the favicon
+    """
     return send_from_directory(
         os.path.join(
             app.root_path,
@@ -96,10 +98,17 @@ def serve_file(filename):
             ),
             200,
         )
-    except RuntimeError as e:
-        return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
-
-    #     if "Response payload too large" in str(e): #try to catch vercel limit error
+    except RuntimeError as e:  #try to catch vercel limit error
+        logging.error(f"Runtime Error: {e} for {filename}")
+        # if its a pdf: 
+        if filename.endswith(".pdf"):
+            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")
+        else:
+            return render_template(
+                        "error.html",
+                        title="Runtime Error",
+                        message="Sorry, the server encountered a runtime error",
+                    ),500   #     if "Response payload too large" in str(e):
     #         # Redirect to a third-party URL if the payload is too large
     #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
     # # For other runtime errors, raise them
@@ -157,10 +166,8 @@ def index():
 @app.route("/logout", methods=["GET"])
 @app.route("/logout.html", methods=["GET"])
 def logout():
-    session.pop("username", None)  # remove the username from the session
-    session.pop("token", None)  # remove the token from the session
-    session.pop("sales_data", None)  # remove the sales data from the session
-    return redirect(url_for("index"), code=302)
+    [session.pop(key, None) for key in list(session.keys())]  # clear the session
+    return redirect(url_for("index"), code=302) # redirect to index
 
 
 # require user and password via get query parameters
@@ -172,7 +179,7 @@ def login():
     # if already logged in, then redirect to admin and pass the username
     if "token" in session and "username" in session:
         user = session["username"]
-        return redirect(url_for("admin", username=user), code=302)
+        return redirect(url_for("admin"), code=302)
 
     error = None
     msg = request.args.get("msg")
@@ -181,8 +188,12 @@ def login():
 
     # if POST, then check if user and password are correct (login sequence)
     if request.method == "POST":
-        user = request.form.get("username", "")
-        password = request.form.get("password", "")
+        user = request.form.get("username", None)
+        password = request.form.get("password", None)
+        if not user or not password:
+            logging.error(f"Missing username or password: {user} {password}")
+            error = "Missing username or password"
+            
         # Basic input validation (e.g., disallowing certain characters)
         # limit username to alphanumeric and underscore
         basic_val_user = "^[a-zA-Z0-9_]+$"
@@ -198,17 +209,16 @@ def login():
             )
             error = "Invalid characters in username or password"
         else:
+            global LOGINS
             if user in LOGINS and LOGINS[user] == password:  # in dict
                 session["username"] = user
                 session["token"] = str(uuid.uuid4())  # generate a random token
-                return redirect(
-                    url_for("admin", username=user), code=302
-                )  # redirect to admin.html
+                return redirect(url_for("admin"), code=302)  # redirect to admin route = success
             else:
                 error = "Wrong user or password"
                 logging.error(f"{error}: {user} {password}")
 
-    return render_template("login.html", error=error), 200
+    return render_template("login.html", error=error), 200 # render login page 
 
 
 @app.route("/register.html", methods=["GET"])
@@ -217,7 +227,7 @@ def register():
     # basically say out of service, not implemented
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="Register",
             message="Registering is not possible at the moment",
         ),
@@ -230,29 +240,29 @@ def register():
 # ensure the passed in username and password are correct again before
 # showing page
 def admin():
-    if "token" not in session:
+    if "token" not in session or "username" not in session:
         abort(403)
     else:
-        user = request.args.get("username", None)
-        # set year to 2029
+        username = session["username"]
+        global YEAR # set year
         current_time = (
             datetime.datetime.now().replace(
-                year=2029).strftime("%Y-%m-%d %H:%M:%S"))
-
-        notifications = 1  # number of notifications
-        if "sales_data" not in session:
+                year=YEAR).strftime("%Y-%m-%d"))
+        
+        if "sales_data" not in session: # create sales data once per session
             sales = make_sales_data()
             session["sales_data"] = sales  # store in session
         else:
             sales = session["sales_data"]  # get from session
+            
         return (
             render_template(
                 "dash.html",
-                username=user,
+                username=username,
                 title="User Panel",
                 current_time=current_time,
                 sales_data=sales,
-                notifications=notifications,
+                notifications=1, # number of notifications
             ),
             200,
         )
@@ -260,7 +270,8 @@ def admin():
 
 def make_sales_data():
     data = []
-    today = datetime.datetime.now().replace(year=2029)
+    global YEAR
+    today = datetime.datetime.now().replace(year=YEAR)
     for i in range(0, 8):
         date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
 
@@ -356,6 +367,26 @@ def list_files():
     else:
         abort(401)  # login required
 
+@app.route('/file_home')
+def file_home():
+    # Directory path to list
+    base_dir = RESOURCE_PATH
+
+    directory_path = os.path.normpath(
+                os.path.join(base_dir, directory)
+            )
+    
+    # List files in the directory
+    directory = [{'name': f} for f in os.listdir(directory_path)]
+    
+    return render_template('lister.html', directory=directory)
+
+@app.route('/filefu/<filename>')
+def file_detail(filename):
+    # Logic to display file details or content
+    # let user download 
+    
+    return f"Details for {filename}"
 
 @app.before_request
 def before_request():
@@ -402,7 +433,7 @@ def unsupported_media_type(e):
     logging.error(f"415: {request.url}")
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="415 Unsupported Media Type",
             message="Sorry, the server cannot process the media type",
         ),
@@ -416,7 +447,7 @@ def bad_request(e):
     logging.error(f"400: {request.url}")
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="400 Bad Request",
             message="Sorry, your request could not be processed",
         ),
@@ -430,7 +461,7 @@ def unauthorized(e):
     logging.error(f"401: {request.url}")
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="401 Unauthorized",
             message="Sorry, your request could not be processed",
         ),
@@ -444,7 +475,7 @@ def forbidden(e):
     logging.error(f"403: {request.url}")
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="403 Forbidden",
             message="Access to this resource on this server is forbidden",
         ),
@@ -465,7 +496,7 @@ def internal_server_error(e):
     logging.error(f"500: {request.url}")
     return (
         render_template(
-            "message.html",
+            "error.html",
             title="500 Internal Server Error",
             message="Try again later"),
         500,

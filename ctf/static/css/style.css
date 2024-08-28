@@ -125,7 +125,7 @@ input[type="Submit"] {
     color: #EF3B3A;
   } */
 
-  header {
+header {
     background-color: #007bff;
     color: white;
     padding: 10px 0;
@@ -154,7 +154,8 @@ header h1 {
     align-items: flex-end;
     justify-content: space-around;
     margin-bottom: 20px;
-    height: 200px; /* Max height for bars */
+    height: 200px;
+    /* Max height for bars */
     overflow: hidden;
 }
 
@@ -178,7 +179,7 @@ header h1 {
     display: wrap;
     color: #ffffff;
     /* hide the grey box */
-    
+
 }
 
 table {
@@ -186,11 +187,14 @@ table {
     border-collapse: collapse;
 }
 
-table, th, td {
+table,
+th,
+td {
     border: 1px solid #ddd;
 }
 
-th, td {
+th,
+td {
     padding: 8px;
     text-align: left;
 }
@@ -206,7 +210,8 @@ th {
     padding: 2px 5px;
     font-family: Arial, sans-serif;
     margin-top: 5px;
-    margin-right: 10px; /* Space between the notification and the username */
+    margin-right: 10px;
+    /* Space between the notification and the username */
 
     cursor: pointer;
 }
@@ -222,7 +227,8 @@ th {
     position: relative;
     width: 25px;
     height: 25px;
-    background-color: #007bff; /* Blue background */
+    background-color: #007bff;
+    /* Blue background */
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -231,7 +237,8 @@ th {
 }
 
 .notification-icon::before {
-    content: "\1F4E5"; /* Unicode for an inbox icon */
+    content: "\1F4E5";
+    /* Unicode for an inbox icon */
     font-size: 24px;
     color: white;
 }
@@ -242,7 +249,8 @@ th {
     right: -5px;
     width: 20px;
     height: 20px;
-    background-color: #ff0000; /* Red background */
+    background-color: #ff0000;
+    /* Red background */
     color: white;
     border-radius: 50%;
     font-size: 12px;
@@ -257,4 +265,3 @@ th {
     font-weight: bold;
     font-size: 16px;
 }
-
