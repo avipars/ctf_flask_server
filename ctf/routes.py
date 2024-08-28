@@ -6,8 +6,7 @@ import logging
 import os
 import re  # regex
 import uuid
-from random import randint, uniform
-
+from random import uniform,gauss
 from flask import (abort, redirect, render_template, render_template_string,
                    request, send_from_directory, session, url_for)
 from markupsafe import escape
@@ -101,9 +100,10 @@ def serve_file(filename):
             200,
         )
     except Exception as e:  # try to catch vercel limit error
-        logging.error(f"General excaption Error: {e} for {filename}")
+        logging.error(f"General Error: {e} for {filename}")
         # if its a pdf:
-        if filename.endswith(".pdf"):
+        if filename.endswith("company_memo.pdf"):
+            print("Redirecting to pdf")
             return (
                 redirect(
                     "https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link"
@@ -284,14 +284,13 @@ def make_sales_data(year):
     today = datetime.datetime.now().replace(year=year)
     for i in range(0, 8):
         date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
+        # random sales data
+        base_reach = 995
 
-        sales = randint(25, 1500)
-        reach = randint(25, 1000)
-        # Profit is a random percentage of sales, but higher sales mean a
-        # higher chance of a better profit margin
-        profit_margin = uniform(0.3, 0.6) + \
-            (sales - 200) / 500 * uniform(0.1, 0.2)
-        profit = int(sales * profit_margin)
+        reach = max(15, int(gauss(base_reach, base_reach * 0.2)))
+        sales = max(5, int(reach * uniform(0.05, 0.35)))
+        profit = max(0, sales * uniform(0.75, 2.5))
+
         data.append({"date": date, "sales": sales,
                     "reach": reach, "profit": profit})
 
@@ -300,9 +299,9 @@ def make_sales_data(year):
     normalized_sales_data = [
         {
             "date": item["date"],
-            "sales": int((item["sales"] / max_sales) * 10),
+            "sales": item["sales"],
             "reach": item["reach"],
-            "profit": item["profit"],
+            "profit": round(item["profit"],2),
         }
         for item in data
     ]
