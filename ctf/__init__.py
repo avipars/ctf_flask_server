@@ -1,5 +1,6 @@
 from flask import Flask
 
+from ctf import errors, routes
 
 # from ctf.error_handlers import register_error_handlers  # Adjust the
 # import based on your project structure
@@ -13,4 +14,3 @@ app = Flask(
 
 # register_error_handlers(app)
 # app.config['referrer_policy'] = 'strict-origin-when-cross-origin'
-from ctf import routes, errors
