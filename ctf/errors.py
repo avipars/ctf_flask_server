@@ -1,7 +1,6 @@
-from flask import render_template
+from flask import render_template, request
 from ctf import app
 import logging
-from flask import request
 
 @app.errorhandler(415)
 def unsupported_media_type(e):
@@ -63,7 +62,8 @@ def forbidden(e):
 @app.errorhandler(413)
 def payload_too_large_error(error):
     # Log the error (optional)
-    app.logger.error(f"Payload Too Large: {error}")
+    logging.error(f"Payload Too Large: : {request.url} {error}")
+
     # Render the custom error page
     return render_template('error.html', title="413 Payload Too Large", message="use the mirror site"), 413
 
