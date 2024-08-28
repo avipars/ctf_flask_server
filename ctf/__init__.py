@@ -1,7 +1,6 @@
 # pylint: skip-file
 from flask import Flask
 
-
 # from ctf.error_handlers import register_error_handlers  # Adjust the
 # import based on your project structure
 
