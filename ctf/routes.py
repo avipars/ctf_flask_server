@@ -1,18 +1,18 @@
-import datetime
-import logging
-import os
-from random import randint, uniform
-import re  # regex
-import uuid
-
-from flask import (abort, redirect, render_template, render_template_string,
-                   request, send_from_directory, session, url_for, abort)
-from markupsafe import escape
 # from werkzeug.utils import secure_filename
 import base64
+import datetime
 import json
-from ctf import app
+import logging
+import os
+import re  # regex
+import uuid
+from random import randint, uniform
 
+from flask import (abort, redirect, render_template, render_template_string,
+                   request, send_from_directory, session, url_for)
+from markupsafe import escape
+
+from ctf import app
 
 right_values = False  # if they have right http headers  TODO change to false
 # allowed files and their mime types
@@ -104,13 +104,21 @@ def serve_file(filename):
         logging.error(f"General excaption Error: {e} for {filename}")
         # if its a pdf:
         if filename.endswith(".pdf"):
-            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link"), 302
+            return (
+                redirect(
+                    "https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link"
+                ),
+                302,
+            )
         else:
-            return render_template(
-                "error.html",
-                title="Runtime Error",
-                message="Sorry, the server encountered a runtime error",
-            ), 500  # if "Response payload too large" in str(e):
+            return (
+                render_template(
+                    "error.html",
+                    title="Runtime Error",
+                    message="Sorry, the server encountered a runtime error",
+                ),
+                500,
+            )  # if "Response payload too large" in str(e):
     #         # Redirect to a third-party URL if the payload is too large
     #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")
     # # For other runtime errors, raise them
@@ -234,9 +242,9 @@ def register():
             "error.html",
             title="Register",
             message="Registering is not possible at the moment",
-        ), 500
+        ),
+        500,
         # 500, pass the error to be logged by the error handler
-
     )
 
 
@@ -250,9 +258,7 @@ def admin():
     else:
         username = session["username"]
         global YEAR  # set year
-        current_time = (
-            datetime.datetime.now().replace(
-                year=YEAR).strftime("%Y-%m-%d"))
+        current_time = datetime.datetime.now().replace(year=YEAR).strftime("%Y-%m-%d")
 
         if "sales_data" not in session:  # create sales data once per session
             sales = make_sales_data(year=YEAR)
@@ -283,8 +289,8 @@ def make_sales_data(year):
         reach = randint(25, 1000)
         # Profit is a random percentage of sales, but higher sales mean a
         # higher chance of a better profit margin
-        profit_margin = uniform(
-            0.3, 0.6) + (sales - 200) / 500 * uniform(0.1, 0.2)
+        profit_margin = uniform(0.3, 0.6) + \
+            (sales - 200) / 500 * uniform(0.1, 0.2)
         profit = int(sales * profit_margin)
         data.append({"date": date, "sales": sales,
                     "reach": reach, "profit": profit})
@@ -372,8 +378,8 @@ def list_files():
         abort(401)  # login required
 
 
-@app.route('/file_home', methods=["GET"])
-@app.route('/file_home.html', methods=["GET"])
+@app.route("/file_home", methods=["GET"])
+@app.route("/file_home.html", methods=["GET"])
 def file_home():
 
     # Directory path to list
@@ -403,13 +409,20 @@ def file_home():
     # List files in the directory, create dict with whole path, filesize, name
     # directory = escape_path_traversal(directory)
 
-    dir = [{"path": os.path.normpath(os.path.join(directory_path, f)), "size": os.path.getsize(os.path.join(
-        directory_path, f)), "name": f, "is_dir": os.path.isdir(directory_path, f)} for f in os.listdir(directory_path)]
+    dir = [
+        {
+            "path": os.path.normpath(os.path.join(directory_path, f)),
+            "size": os.path.getsize(os.path.join(directory_path, f)),
+            "name": f,
+            "is_dir": os.path.isdir(directory_path, f),
+        }
+        for f in os.listdir(directory_path)
+    ]
 
-    return render_template('lister.html', directory=dir)
+    return render_template("lister.html", directory=dir)
 
 
-@app.route('/filefu/<filename>')
+@app.route("/filefu/<filename>")
 def file_detail(filename):
     # Logic to display file details or content
     return f"Details for {filename}"

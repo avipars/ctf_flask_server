@@ -1,6 +1,9 @@
 import logging
+
 from flask import render_template, request
+
 from ctf import app
+
 
 @app.errorhandler(415)
 def unsupported_media_type(e):
@@ -74,6 +77,7 @@ def handle_runtime_error(error):
             message="use the mirror site"),
         413,
     )
+
 
 @app.errorhandler(404)
 def page_not_found(e):
