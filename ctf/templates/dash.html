@@ -3,7 +3,7 @@
 {% block head %}
 {{ super() }}
 <!-- charts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 {% endblock %}
 {% block content %}
 <div class="container">
@@ -34,16 +34,6 @@
             <canvas id="barChart"></canvas>
             <canvas id="lineChart"></canvas>
         </div>
-
-        <!-- <div class="chart">
-            {% for data in sales_data %}
-            <div class="bar" style="height: {{ data.profit }}px;">
-                ${{ data.profit }}
-                <div class="label">{{ data.sales }}</div>
-            </div>
-            {% endfor %}
-        </div>
-      -->
 
       <table>
         <thead>

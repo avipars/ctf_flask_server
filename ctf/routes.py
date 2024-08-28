@@ -89,8 +89,8 @@ def serve_file(filename):
             ALLOW_MIME):  # Check file extension if needed
         logging.error(f"Invalid file extension: {filename}")
         abort(415)
-    try:
-        return (
+        
+    return (
             send_from_directory(
                 RESOURCE_PATH,
                 filename,
@@ -99,30 +99,6 @@ def serve_file(filename):
             ),
             200,
         )
-    except Exception as e:  # try to catch vercel limit error
-        logging.error(f"General Error: {e} for {filename}")
-        # if its a pdf:
-        if filename.endswith("company_memo.pdf"):
-            print("Redirecting to pdf")
-            return (
-                redirect(
-                    "https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link"
-                ),
-                302,
-            )
-        else:
-            return (
-                render_template(
-                    "error.html",
-                    title="Runtime Error",
-                    message="Sorry, the server encountered a runtime error",
-                ),
-                500,
-            )  # if "Response payload too large" in str(e):
-    #         # Redirect to a third-party URL if the payload is too large
-    #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")
-    # # For other runtime errors, raise them
-    # raise e
 
 
 def validate_path(path):
@@ -170,7 +146,7 @@ def is_bad(path):
 @app.route("/home", methods=["GET"])
 def index():
     return render_template(
-        "home.html", title="Welcome to ColaCo's Website"), 200
+        "home.html", title="Welcome to ColaCo"), 200
 
 
 @app.route("/logout", methods=["GET"])
@@ -295,7 +271,6 @@ def make_sales_data(year):
                     "reach": reach, "profit": profit})
 
     # Calculate the max sales value to normalize the bar heights
-    max_sales = max(item["sales"] for item in data)
     normalized_sales_data = [
         {
             "date": item["date"],
@@ -358,14 +333,14 @@ def list_files():
                     logging.info(f"Item path: {item_path}")
                     # linkify the files
 
-                    if os.path.isdir(
+                    if os.path.isdir( # check if it is a directory
                         os.path.join(
                             directory_path,
                             item)):  # directory
                         items[i] = (
                             f'<a href="/list_files?directory={item_path}">{escape(item)}</a>'
                         )
-                    else:
+                    else: # file
                         items[i] = f'<a href="/files/{item_path}">{escape(item)}</a>'
                 return render_template_string("<br>".join(items))
             else:
@@ -375,57 +350,6 @@ def list_files():
             abort(500)
     else:
         abort(401)  # login required
-
-
-@app.route("/file_home", methods=["GET"])
-@app.route("/file_home.html", methods=["GET"])
-def file_home():
-
-    # Directory path to list
-    base_dir = RESOURCE_PATH
-    directory = request.args.get("directory", None)
-
-    if not directory:
-        abort(400)
-
-    directory_path = os.path.normpath(
-        os.path.join(base_dir, directory)
-    )  # Construct the full path
-    # we only want directory traversal within the base directory
-    # RESOURCE_PATH
-    directory = escape_path_traversal(directory)
-
-    # Ensure the directory is within the base directory to avoid
-    # outside directory traversal
-    if os.path.commonprefix([directory_path, base_dir]) != base_dir:
-        abort(403)
-    print(f"Directory path: {directory_path}")
-
-    #   item_path = escape(
-    #                     os.path.normpath(
-    #                         os.path.join(
-    #                             directory, item)))
-    # List files in the directory, create dict with whole path, filesize, name
-    # directory = escape_path_traversal(directory)
-
-    dir = [
-        {
-            "path": os.path.normpath(os.path.join(directory_path, f)),
-            "size": os.path.getsize(os.path.join(directory_path, f)),
-            "name": f,
-            "is_dir": os.path.isdir(directory_path, f),
-        }
-        for f in os.listdir(directory_path)
-    ]
-
-    return render_template("lister.html", directory=dir)
-
-
-@app.route("/filefu/<filename>")
-def file_detail(filename):
-    # Logic to display file details or content
-    return f"Details for {filename}"
-
 
 @app.before_request
 def before_request():
