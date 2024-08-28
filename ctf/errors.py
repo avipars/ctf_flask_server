@@ -1,6 +1,6 @@
+import logging
 from flask import render_template, request
 from ctf import app
-import logging
 
 @app.errorhandler(415)
 def unsupported_media_type(e):
@@ -57,16 +57,23 @@ def forbidden(e):
         403,
     )
 
+
 # TODO test if this works with vercel
 # Error handler for 413 Payload Too Large
 @app.errorhandler(413)
-def payload_too_large_error(error):
+def handle_runtime_error(error):
     # Log the error (optional)
+    logging.error("vercel pdf error")
     logging.error(f"Payload Too Large: : {request.url} {error}")
 
     # Render the custom error page
-    return render_template('error.html', title="413 Payload Too Large", message="use the mirror site"), 413
-
+    return (
+        render_template(
+            "error.html",
+            title="413 Payload Too Large",
+            message="use the mirror site"),
+        413,
+    )
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -86,4 +93,3 @@ def internal_server_error(e):
             message="Try again later"),
         500,
     )
-

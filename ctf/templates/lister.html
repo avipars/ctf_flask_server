@@ -13,6 +13,7 @@
             <a href="{{ url_for('serve_file', filename=item.name) }}">
                 {{ item.name }}
             </a>
+            file size: {{ item.size }}
             <!-- if subdirectory -->
             {% else %}
             <a href="{{ url_for('list_files', directory=item.name) }}">

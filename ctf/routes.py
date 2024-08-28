@@ -1,21 +1,20 @@
 import datetime
 import logging
 import os
-import random
+from random import randint, uniform
 import re  # regex
 import uuid
 
 from flask import (abort, redirect, render_template, render_template_string,
-                   request, send_from_directory, session, url_for, jsonify, Response, abort)
+                   request, send_from_directory, session, url_for, abort)
 from markupsafe import escape
-from werkzeug.utils import secure_filename
+# from werkzeug.utils import secure_filename
 import base64
-import random
 import json
 from ctf import app
 
 
-right_values = False # if they have right http headers  TODO change to false
+right_values = False  # if they have right http headers  TODO change to false
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
@@ -30,9 +29,9 @@ ALLOW_MIME = {
 # from user_agents import parse
 # from werkzeug.useragents import UserAgent
 
-LOGINS = {} 
+LOGINS = {}
 YEAR = 2029
-with open('logins.json') as f: # load the logins from the file
+with open("logins.json") as f:  # load the logins from the file
     LOGINS = json.load(f)
 
 app.secret_key = "MyUb3rSecr3tS355ionK3y"  # key for sessions
@@ -47,9 +46,12 @@ RESOURCE_PATH = os.path.join(
     app.root_path, "resources"
 )  # Configure the allowed directory
 
+# easy for anyone to reverse though
+
 
 def obfuscate(content):
     return base64.b64encode(content.encode()).decode()
+
 
 def deobfuscate(content):
     return base64.b64decode(content.encode()).decode()
@@ -88,7 +90,7 @@ def serve_file(filename):
             ALLOW_MIME):  # Check file extension if needed
         logging.error(f"Invalid file extension: {filename}")
         abort(415)
-    try: 
+    try:
         return (
             send_from_directory(
                 RESOURCE_PATH,
@@ -98,21 +100,21 @@ def serve_file(filename):
             ),
             200,
         )
-    except RuntimeError as e:  #try to catch vercel limit error
-        logging.error(f"Runtime Error: {e} for {filename}")
-        # if its a pdf: 
+    except Exception as e:  # try to catch vercel limit error
+        logging.error(f"General excaption Error: {e} for {filename}")
+        # if its a pdf:
         if filename.endswith(".pdf"):
-            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")
+            return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link"), 302
         else:
             return render_template(
-                        "error.html",
-                        title="Runtime Error",
-                        message="Sorry, the server encountered a runtime error",
-                    ),500   #     if "Response payload too large" in str(e):
+                "error.html",
+                title="Runtime Error",
+                message="Sorry, the server encountered a runtime error",
+            ), 500  # if "Response payload too large" in str(e):
     #         # Redirect to a third-party URL if the payload is too large
-    #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")            
+    #         return redirect("https://drive.google.com/file/d/12GzX_c_b8V-yHDan70-K0BCcGU0oYYwj/view?usp=drive_link")
     # # For other runtime errors, raise them
-    # raise e     
+    # raise e
 
 
 def validate_path(path):
@@ -166,8 +168,9 @@ def index():
 @app.route("/logout", methods=["GET"])
 @app.route("/logout.html", methods=["GET"])
 def logout():
-    [session.pop(key, None) for key in list(session.keys())]  # clear the session
-    return redirect(url_for("index"), code=302) # redirect to index
+    [session.pop(key, None)
+     for key in list(session.keys())]  # clear the session
+    return redirect(url_for("index"), code=302)  # redirect to index
 
 
 # require user and password via get query parameters
@@ -193,7 +196,7 @@ def login():
         if not user or not password:
             logging.error(f"Missing username or password: {user} {password}")
             error = "Missing username or password"
-            
+
         # Basic input validation (e.g., disallowing certain characters)
         # limit username to alphanumeric and underscore
         basic_val_user = "^[a-zA-Z0-9_]+$"
@@ -213,12 +216,13 @@ def login():
             if user in LOGINS and LOGINS[user] == password:  # in dict
                 session["username"] = user
                 session["token"] = str(uuid.uuid4())  # generate a random token
-                return redirect(url_for("admin"), code=302)  # redirect to admin route = success
+                # redirect to admin route = success
+                return redirect(url_for("admin"), code=302)
             else:
                 error = "Wrong user or password"
                 logging.error(f"{error}: {user} {password}")
 
-    return render_template("login.html", error=error), 200 # render login page 
+    return render_template("login.html", error=error), 200  # render login page
 
 
 @app.route("/register.html", methods=["GET"])
@@ -232,7 +236,7 @@ def register():
             message="Registering is not possible at the moment",
         ), 500
         # 500, pass the error to be logged by the error handler
-        
+
     )
 
 
@@ -245,17 +249,17 @@ def admin():
         abort(403)
     else:
         username = session["username"]
-        global YEAR # set year
+        global YEAR  # set year
         current_time = (
             datetime.datetime.now().replace(
                 year=YEAR).strftime("%Y-%m-%d"))
-        
-        if "sales_data" not in session: # create sales data once per session
-            sales = make_sales_data()
+
+        if "sales_data" not in session:  # create sales data once per session
+            sales = make_sales_data(year=YEAR)
             session["sales_data"] = sales  # store in session
         else:
             sales = session["sales_data"]  # get from session
-            
+
         return (
             render_template(
                 "dash.html",
@@ -263,25 +267,24 @@ def admin():
                 title="User Panel",
                 current_time=current_time,
                 sales_data=sales,
-                notifications=1, # number of notifications
+                notifications=1,  # number of notifications
             ),
             200,
         )
 
 
-def make_sales_data():
+def make_sales_data(year):
     data = []
-    global YEAR
-    today = datetime.datetime.now().replace(year=YEAR)
+    today = datetime.datetime.now().replace(year=year)
     for i in range(0, 8):
         date = (today - datetime.timedelta(days=i)).strftime("%m-%d")
 
-        sales = random.randint(15, 573)
-        reach = random.randint(25, 1000)
+        sales = randint(25, 1500)
+        reach = randint(25, 1000)
         # Profit is a random percentage of sales, but higher sales mean a
         # higher chance of a better profit margin
-        profit_margin = random.uniform(
-            0.3, 0.6) + (sales - 200) / 500 * random.uniform(0.1, 0.2)
+        profit_margin = uniform(
+            0.3, 0.6) + (sales - 200) / 500 * uniform(0.1, 0.2)
         profit = int(sales * profit_margin)
         data.append({"date": date, "sales": sales,
                     "reach": reach, "profit": profit})
@@ -291,7 +294,7 @@ def make_sales_data():
     normalized_sales_data = [
         {
             "date": item["date"],
-            "sales": int((item["sales"] / max_sales) * 5),
+            "sales": int((item["sales"] / max_sales) * 10),
             "reach": item["reach"],
             "profit": item["profit"],
         }
@@ -368,26 +371,43 @@ def list_files():
     else:
         abort(401)  # login required
 
+
 @app.route('/file_home', methods=["GET"])
 @app.route('/file_home.html', methods=["GET"])
 def file_home():
-    
+
     # Directory path to list
     base_dir = RESOURCE_PATH
     directory = request.args.get("directory", None)
 
-    if directory:
-        directory_path = os.path.normpath(
-                    os.path.join(base_dir, directory)
-                )
-        print(f"Directory path: {directory_path}")
-    else:
-        directory_path = os.path.normpath(base_dir)
-    
-    # List files in the directory
-    directory = [{'name': f} for f in os.listdir(directory_path)]
-    
-    return render_template('lister.html', directory=directory)
+    if not directory:
+        abort(400)
+
+    directory_path = os.path.normpath(
+        os.path.join(base_dir, directory)
+    )  # Construct the full path
+    # we only want directory traversal within the base directory
+    # RESOURCE_PATH
+    directory = escape_path_traversal(directory)
+
+    # Ensure the directory is within the base directory to avoid
+    # outside directory traversal
+    if os.path.commonprefix([directory_path, base_dir]) != base_dir:
+        abort(403)
+    print(f"Directory path: {directory_path}")
+
+    #   item_path = escape(
+    #                     os.path.normpath(
+    #                         os.path.join(
+    #                             directory, item)))
+    # List files in the directory, create dict with whole path, filesize, name
+    # directory = escape_path_traversal(directory)
+
+    dir = [{"path": os.path.normpath(os.path.join(directory_path, f)), "size": os.path.getsize(os.path.join(
+        directory_path, f)), "name": f, "is_dir": os.path.isdir(directory_path, f)} for f in os.listdir(directory_path)]
+
+    return render_template('lister.html', directory=dir)
+
 
 @app.route('/filefu/<filename>')
 def file_detail(filename):
@@ -409,12 +429,19 @@ def before_request():
     origin = request.headers.get("Origin")
     global right_values
     print(f"Origin: {origin}")
-    if referer != "https://www.colaco.website" and origin != "https://www.colaco.website" and user_agent != "ColaCoBot":
-        logging.warning(f"Invalid referer or origin: {referer} {origin} {user_agent}")
+    if (
+        referer != "https://www.colaco.website"
+        and origin != "https://www.colaco.website"
+        and user_agent != "ColaCoBot"
+    ):
+        logging.warning(
+            f"Invalid referer or origin: {referer} {origin} {user_agent}")
         # right_values = False # TODO change later - uncomment
     else:
         right_values = True
-        logging.info(f"Valid referer and origin: {referer} {origin} {user_agent}")
+        logging.info(
+            f"Valid referer and origin: {referer} {origin} {user_agent}")
+
 
 def extract_ip():  # get the ip of the user (and store it in a global variable)
     """get the IP of the user"""
@@ -432,7 +459,6 @@ def extract_ip():  # get the ip of the user (and store it in a global variable)
         logging.warning(
             f"Error: No X-Real-IP header, using remote_addr {ip} {port}")
     return ip
-
 
 
 if __name__ == "__main__":
