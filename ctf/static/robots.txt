@@ -1,5 +1,5 @@
-# allow only ColaCoBrowser
-User-agent: ColaCoBrowser*
+# allow our approved browser ColaCo{Browser}
+User-agent: ColaCoBrowser
 Disallow:
 
 # block everything else
