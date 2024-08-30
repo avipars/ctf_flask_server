@@ -9,6 +9,7 @@ from ctf import app
 def unsupported_media_type(e):
     # note that we set the 415 status explicitly
     logging.error(f"415: {request.url} {e}")
+    
     return (
         render_template(
             "error.html",
@@ -23,6 +24,7 @@ def unsupported_media_type(e):
 def bad_request(e):
     # note that we set the 400 status explicitly
     logging.error(f"400: {request.url} {e}")
+    # if we set headers etc
     return (
         render_template(
             "error.html",

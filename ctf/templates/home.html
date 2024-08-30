@@ -18,4 +18,12 @@
     <a href="{{ url_for('register') }}">Click Here</a> to register
 </p>
 
+{#<!-- if we sent in some info, show it via js console log -->#}
+
+{% if jsinfo is defined and jsinfo %}
+<script>
+  console.log("{{ jsinfo }}");
+</script>
+{% endif %}
+
 {% endblock %}

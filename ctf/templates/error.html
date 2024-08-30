@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {#<!-- Exports header and navbar from header.html -->#}
-{% block title %}{{ title }}{% endblock %} 
+{% block title %}{{ title }}{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -10,12 +10,29 @@
 
 {% block content %}
 
-<h1 class="error">
-  {{ title }}
-</h1>
+  <h1 class="error">
+    {{ title }}
+  </h1>
 
-{% block body %}
-  <h2>  {{ message }}</h2> 
+  {% block body %}
+  <h2> {{ message }}</h2>
+
+  {#<!-- if we sent in some info, show it via js console log -->#}
+
+  {% if jsinfo is defined and jsinfo %}
+  <script>
+    console.log("{{ jsinfo }}");
+  </script>
+  {% endif %}
+
+  {#<!-- if we sent in some error, show it via js alert or flash -->#}
+
+  {% if jsalert is defined and jsalert %}
+  <script>
+    alert("{{ jsalert }}");
+  </script>
+  {% endif %}
+
+  {% endblock %}
+
 {% endblock %}
-
-{% endblock %} 

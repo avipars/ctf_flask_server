@@ -1,5 +1,4 @@
 # from werkzeug.utils import secure_filename
-import base64
 import datetime
 import json
 import logging
@@ -8,12 +7,18 @@ import re  # regex
 import uuid
 from random import uniform,gauss
 from flask import (abort, redirect, render_template, render_template_string,
-                   request, send_from_directory, session, url_for)
+                   request, send_from_directory, session, url_for, Response)
 from markupsafe import escape
 
 from ctf import app
 
-right_values = False  # if they have right http headers  TODO change to false
+YEAR = 2029
+
+
+LOGINS = {}
+with open("logins.json") as f:  # load the logins from the file
+    LOGINS = json.load(f)
+    
 # allowed files and their mime types
 ALLOW_MIME = {
     "pdf": "application/pdf",
@@ -23,15 +28,12 @@ ALLOW_MIME = {
     "jpeg": "image/jpeg",
     "gif": "image/gif",
     "txt": "text/plain",
-    "pcapng": "application/vnd.tcpdump.pcap",
 }
-# from user_agents import parse
-# from werkzeug.useragents import UserAgent
 
-LOGINS = {}
-YEAR = 2029
-with open("logins.json") as f:  # load the logins from the file
-    LOGINS = json.load(f)
+RESOURCE_PATH = os.path.join(
+    app.root_path, "resources"
+)  # Configure the allowed directory
+
 
 app.secret_key = "MyUb3rSecr3tS355ionK3y"  # key for sessions
 # ensure session cookie is httponly
@@ -40,21 +42,6 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Strict"
 app.config["REMEMBER_COOKIE_SECURE"] = True  # ensure remember cookie is secure
 app.config["SESSION_COOKIE_SECURE"] = True  # ensure session cookie is secure
-
-RESOURCE_PATH = os.path.join(
-    app.root_path, "resources"
-)  # Configure the allowed directory
-
-# easy for anyone to reverse though
-
-
-def obfuscate(content):
-    return base64.b64encode(content.encode()).decode()
-
-
-def deobfuscate(content):
-    return base64.b64decode(content.encode()).decode()
-
 
 @app.route("/favicon.ico", methods=["GET"])
 def favicon():
@@ -76,7 +63,8 @@ def serve_file(filename):
     in charge of serving files from the /resources directory
     """
     # filename = secure_filename(filename) # sanitize the filename
-    if "token" not in session:
+
+    if "token" not in session:  # if not logged in
         abort(401)
 
     path = validate_path(filename)
@@ -153,7 +141,7 @@ def index():
 @app.route("/logout.html", methods=["GET"])
 def logout():
     [session.pop(key, None)
-     for key in list(session.keys())]  # clear the session
+     for key in list(session.keys())]  # clear the session data
     return redirect(url_for("index"), code=302)  # redirect to index
 
 
@@ -217,7 +205,7 @@ def register():
         render_template(
             "error.html",
             title="Register",
-            message="Registering is not possible at the moment",
+            message="Registration of new accounts is currently not possible.",
         ),
         500,
         # 500, pass the error to be logged by the error handler
@@ -355,29 +343,100 @@ def list_files():
 def before_request():
     """check user agent and IP"""
     ip = extract_ip()
+    
     user_agent = request.headers.get("User-Agent")
-    # user_agent = UserAgent(request.headers.get("User-Agent"))
-    print(f"IP: {ip} User-Agent: {user_agent}")
-    # get the referrer
-    referer = request.referrer
-    print(f"Referer: {referer}")
-    # origin
     origin = request.headers.get("Origin")
-    global right_values
-    print(f"Origin: {origin}")
-    if (
-        referer != "https://www.colaco.website"
-        and origin != "https://www.colaco.website"
-        and user_agent != "ColaCoBot"
-    ):
-        logging.warning(
-            f"Invalid referer or origin: {referer} {origin} {user_agent}")
-        # right_values = False # TODO change later - uncomment
-    else:
-        right_values = True
-        logging.info(
-            f"Valid referer and origin: {referer} {origin} {user_agent}")
 
+    print(f"IP: {ip} User-Agent: {user_agent}")
+    if origin is not None or request.referrer is not None:
+        print(f"Referrer: {request.referrer} Origin: {origin}")
+    
+    # always allow things in the static folder, we want favicon, css, robots and sitemap to work
+    full_path = os.path.join(app.root_path, "static", request.path.lstrip("/"))
+    # check if the file exists
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        print(f"Full Path: {full_path}")
+        return
+    
+    # Initialize or increment the session's failed attempts counter
+    if "failed_attempts" not in session:
+        session["failed_attempts"] = 0    
+        
+     # will block functionality in the app if not right
+    user_agent = user_agent.strip()
+    js_alert = None
+    harshness = 15 # number of tries before we dish out more hints
+    title = "Invalid User-Agent"
+    message = "Please use the latest and most secure cooperate browser"
+    page = "error.html"
+    base_err = render_template(page, title=title,  message=message)
+
+    print(f"Failed Attempts: {session['failed_attempts']}")           
+    if not user_agent.startswith("ColaCoBrowser "):
+        logging.warning(
+            f"Invalid UA, no ColaCoBrowser: {user_agent}")
+        session['failed_attempts'] += 1
+
+        if session['failed_attempts'] < harshness:
+            hint1 = "domo arigato"
+            us_err_html = base_err
+        else:
+            hint1 = "mr roboto.txt"
+            js_alert = "hint in HTTP Headers"
+            us_err_html = render_template(page, 
+                                        title=title, 
+                                        message=message, 
+                                        jsinfo=hint1,jsalert=js_alert)
+            session['failed_attempts'] = 0
+
+
+        return Response(us_err_html,headers={"X-Wrong-Browser": "true", "X-Hint": hint1},
+                        status=400)
+        
+    elif "M9 Ultra" not in user_agent:
+        logging.warning(
+            f"Invalid UA, no M9 Ultra: {user_agent}")
+        session['failed_attempts'] += 1
+
+        if session['failed_attempts'] < harshness:
+            hint1 = "sugar rush"
+            hint2 = "prior stage"
+            us_err_html = base_err
+        else:
+            hint1 = "all dns"
+            hint2 = "sugar rush cloud ns"
+            js_alert = "check the console too"
+            us_err_html = render_template(page, 
+                                        title=title, 
+                                        message=message, 
+                                        jsinfo=hint2,jsalert=js_alert)
+            session['failed_attempts'] = 0
+        return Response(us_err_html,headers={"X-Wrong-CPU": "true", "X-Hint":hint1}, 
+                        status=401)
+    elif "MacOS XIX" not in user_agent:
+        logging.warning(
+            f"Invalid UA, no MacOS XIX: {user_agent}")
+        session['failed_attempts'] += 1
+
+        if session['failed_attempts'] < harshness:
+            hint1 = "One last thing"
+            us_err_html = base_err
+        else:
+            hint1 = "can't forget the OS"
+            js_alert = "If I only had a brain"
+            
+            us_err_html = render_template(page, 
+                                        title=title, 
+                                        message=message,  
+                                      jsinfo=hint2,jsalert=js_alert)   
+            session['failed_attempts'] = 0
+        
+        return Response(us_err_html, headers={"X-Wrong-OS": "true", "X-Hint":hint1},
+                        status=403)
+    else:
+        session['failed_attempts'] = 0
+        logging.info(f"Valid UA: {user_agent}")
+        
 
 def extract_ip():  # get the ip of the user (and store it in a global variable)
     """get the IP of the user"""

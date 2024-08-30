@@ -1,14 +1,9 @@
-# block everything from being indexed
-# User-agent: *
-# Disallow: / 
+# allow only ColaCoBrowser
+User-agent: ColaCoBrowser*
+Disallow:
 
-# block the login page, and reports directory but allow the rest
+# block everything else
 User-agent: *
-Disallow: /login
-Disallow: /reports/*
-Sitemap: http://colaco.website/sitemap.xml
+Disallow: / 
 
-# this site is for illustrative purposes only, and is not a real site
-
-User-agent: ColaCoBot
-allow: /login
+Sitemap: https://colaco.website/sitemap.xml
