@@ -1,4 +1,4 @@
-# allow our approved browser ColaCo{Browser}
+# allow our approved ColaCo{Its4m34Br0w53r}
 User-agent: ColaCoBrowser
 Disallow:
 
