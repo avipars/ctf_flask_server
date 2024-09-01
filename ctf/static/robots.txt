@@ -1,0 +1,9 @@
+# allow our approved ColaCo{Its4m34Br0w53r}
+User-agent: ColaCoBrowser
+Disallow:
+
+# block everything else
+User-agent: *
+Disallow: / 
+
+Sitemap: https://colaco.website/sitemap.xml
