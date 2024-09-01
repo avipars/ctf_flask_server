@@ -1,4 +1,4 @@
-### Vulnerable server that is part of a CTF challenge
+### Server that is part of a CTF challenge
 
 - main intentional vulnerability is directory (path) traversal...
 
