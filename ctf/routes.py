@@ -368,7 +368,7 @@ def before_request():
     # will block functionality in the app if not right
     user_agent = user_agent.strip()
     js_alert = None
-    harshness = 15  # number of tries before we dish out more hints
+    harshness = 5  # number of tries before we dish out more hints
     title = "Invalid User-Agent"
     message = "Please use the latest and most secure corporate browser"
     page = "error.html"
