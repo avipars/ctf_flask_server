@@ -370,7 +370,7 @@ def before_request():
     js_alert = None
     harshness = 15  # number of tries before we dish out more hints
     title = "Invalid User-Agent"
-    message = "Please use the latest and most secure cooperate browser"
+    message = "Please use the latest and most secure corporate browser"
     page = "error.html"
     base_err = render_template(page, title=title, message=message)
 
@@ -471,6 +471,12 @@ def extract_ip():  # get the ip of the user (and store it in a global variable)
             f"Error: No X-Real-IP header, using remote_addr {ip} {port}")
     return ip
 
+@app.context_processor
+def inject_stuff():
+    """
+    used for the footer to display the YEAR, version
+    """
+    return {"year": YEAR, "version": "1.0.0"}
 
 if __name__ == "__main__":
     print("Running Flask Server from routes.py")
