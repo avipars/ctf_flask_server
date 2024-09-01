@@ -375,7 +375,7 @@ def before_request():
     base_err = render_template(page, title=title, message=message)
 
     print(f"Failed Attempts: {session['failed_attempts']}")
-    if not user_agent.startswith("ColaCoBrowser "):
+    if not user_agent.startswith("ColaCoBrowser"):
         logging.warning(f"Invalid UA, no ColaCoBrowser: {user_agent}")
         session["failed_attempts"] += 1
 
@@ -471,12 +471,14 @@ def extract_ip():  # get the ip of the user (and store it in a global variable)
             f"Error: No X-Real-IP header, using remote_addr {ip} {port}")
     return ip
 
+
 @app.context_processor
 def inject_stuff():
     """
     used for the footer to display the YEAR, version
     """
-    return {"year": YEAR, "version": "1.0.0"}
+    return {"year": YEAR, "version": "1.0.0.1"}
+
 
 if __name__ == "__main__":
     print("Running Flask Server from routes.py")
