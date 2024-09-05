@@ -402,7 +402,7 @@ def before_request():
     elif "M9 ULTRA" not in user_agent.upper():
         logging.warning(f"Invalid UA, no M9 Ultra: {user_agent}")
         session["failed_attempts"] += 1
-
+        message = "Please upgrade your CPU to avoid security vulnerabilities"
         if session["failed_attempts"] < harshness:
             hint1 = "suga rush"
             hint2 = "prior stage"
@@ -427,7 +427,7 @@ def before_request():
     elif "MACOS XIX" not in user_agent.upper():
         logging.warning(f"Invalid UA, no MACOS XIX: {user_agent}")
         session["failed_attempts"] += 1
-
+        message = "Please update your OS to the latest version"
         if session["failed_attempts"] < harshness:
             hint1 = "One last thing"
             us_err_html = base_err
