@@ -1,9 +1,13 @@
-### Server that is part of a CTF challenge
+### Server that is part of my CTF challenge
 
-- main intentional vulnerability is directory (path) traversal...
 
-- session cookies are not using strong encryption
+<details>
+  <summary>Spoilers below: </summary>
+  <p>Contains vulnerability with directory (path) traversal</p>
+  <p>Session cookies are not using strong encryption</p>
+  </details>
 
-Runs on Flask and python 3.11
+
 
 Works with vercel and render.com nearly out of the box 
+Runs on Flask and python 3.11
